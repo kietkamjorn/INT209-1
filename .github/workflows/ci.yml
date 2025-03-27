@@ -17,8 +17,17 @@ jobs:
       - name: Set up Docker Compose
         run: |
           docker compose up -d
-          echo "⏳ Waiting for containers to initialize..."
-          sleep 20
+          echo "⏳ Waiting for web container to be ready..."
+          for i in {1..10}; do
+            if docker compose exec web curl -s http://localhost:5000/api/healthcheck; then
+              echo "✅ Web container is ready!"
+              exit 0
+            fi
+            echo "Retrying in 5 seconds..."
+            sleep 5
+          done
+          echo "❌ Web container did not become ready in time."
+          exit 1
 
       - name: Run test inside web container
         run: docker compose exec web curl http://localhost:5000/api/users
